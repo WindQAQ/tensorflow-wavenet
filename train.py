@@ -1,0 +1,123 @@
+import argparse
+import numpy as np
+import tensorflow as tf
+from utils import BatchGenerator
+from utils import merge_and_split
+from reader import KaldiReader
+from reader import LabelReader
+from wavenet.models import WaveNet
+from tensorflow.contrib.keras import utils
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='CTC-based automatic speech recognition')
+    parser.add_argument(
+        '--train_feat', default='./data/processed/train.39.cmvn.scp')
+    parser.add_argument(
+        '--train_label', default='./data/material/train.lbl')
+    parser.add_argument('--residual_channels', type=int, default=64)
+    parser.add_argument('--dilation_channels', type=int, default=128)
+    parser.add_argument('--skip_channels', type=int, default=64)
+    parser.add_argument('--initial_kernel_size', type=int, default=2)
+    parser.add_argument('--kernel_size', type=int, default=2)
+    parser.add_argument('--num_residual_blocks', type=int, default=3)
+    parser.add_argument('--num_dilation_layers', type=int, default=5)
+    parser.add_argument('--valid', type=str, nargs=2)
+    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--epoch', type=int, default=50)
+
+    return parser.parse_args()
+
+
+def eval(sess, model, x, y, batch_size=32):
+    gen = BatchGenerator((x, y), batch_size=batch_size)
+    ler, loss = 0, 0
+    for inputs, labels, sequence_length in gen.next_batch():
+        indices = np.array([labels.row, labels.col]).T
+        values = np.array(labels.data)
+        dense_shape = labels.shape
+
+        _ler, _loss = sess.run([model.edit_distance, model.loss], feed_dict={
+            model.inputs: inputs,
+            model.labels: tf.SparseTensorValue(indices, values, dense_shape),
+            model.sequence_length: sequence_length
+        })
+
+        ler += _ler * len(inputs)
+        loss += _loss * len(inputs)
+
+    return ler / len(x), loss / len(x)
+
+
+def train(model, x, y, epochs, batch_size=1, validation_data=None):
+    train_op = model.optimizer.minimize(model.loss)
+    train_gen = BatchGenerator((x, y), batch_size=batch_size)
+
+    steps_per_epoch = np.ceil(
+        train_gen.data_length / batch_size).astype(np.int32)
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+
+        for epoch in range(1, epochs + 1):
+            prog_bar = utils.Progbar(steps_per_epoch)
+            print('Epoch {}/{}'.format(epoch, epochs))
+            for step, (inputs, labels, sequence_length) in enumerate(train_gen.next_batch(), 1):
+
+                indices = np.array([labels.row, labels.col]).T
+                values = np.array(labels.data)
+                dense_shape = labels.shape
+
+                _, loss = sess.run([train_op, model.loss], feed_dict={
+                    model.inputs: inputs,
+                    model.labels: tf.SparseTensorValue(indices, values, dense_shape),
+                    model.sequence_length: sequence_length
+                })
+
+                if steps_per_epoch == step:
+                    update_values = [('loss', loss)]
+                    if validation_data is not None:
+                        val_ler, val_loss = eval(
+                            sess, model, *validation_data)
+                        update_values += [('val_loss', val_loss),
+                                          ('val_ler', val_ler)]
+
+                    prog_bar.update(step, values=update_values, force=True)
+                else:
+                    prog_bar.update(step, values=[('loss', loss)])
+
+
+def main(args):
+    feat, num_features = KaldiReader.read(args.train_feat)
+    label, num_labels, label_map = LabelReader.read(
+        args.train_label, label_map=None)
+
+    x_train, y_train = merge_and_split(feat, label)
+
+    validation_data = None
+    if args.valid is not None:
+        valid_feat, num_valid_features = KaldiReader.read(args.valid[0])
+        assert(num_features == num_valid_features)
+        valid_label, _, _ = LabelReader.read(
+            args.valid[1], label_map=label_map)
+        validation_data = merge_and_split(valid_feat, valid_label)
+
+    num_classes = num_labels + 1
+    model = WaveNet(num_features,
+                    num_classes,
+                    args.residual_channels,
+                    args.dilation_channels,
+                    args.skip_channels,
+                    initial_kernel_size=args.initial_kernel_size,
+                    kernel_size=args.kernel_size,
+                    num_residual_blocks=args.num_residual_blocks,
+                    num_dilation_layers=args.num_dilation_layers)
+
+    train(model, x_train, y_train, args.epoch,
+          batch_size=args.batch_size, validation_data=validation_data)
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    main(args)
