@@ -85,11 +85,12 @@ def dilation_layer(inputs,
                               skip_channels,
                               1,
                               use_bias=use_bias,
-                              name='{}-1x1-conv'.format(name))
+                              name='{}-1x1-conv-skip'.format(name))
 
-    transformed_outputs = tf.layers.dense(outputs,
-                                          residual_channels,
-                                          use_bias=use_bias,
-                                          name='{}-transform'.format(name))
+    transformed_outputs = conv1d(outputs,
+                                 residual_channels,
+                                 1,
+                                 use_bias=use_bias,
+                                 name='{}-1x1-conv-transform'.format(name))
 
     return transformed_outputs + inputs, skip_connections
