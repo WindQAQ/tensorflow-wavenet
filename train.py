@@ -1,10 +1,10 @@
 import argparse
 import numpy as np
 import tensorflow as tf
-from utils import BatchGenerator
-from utils import merge_and_split
-from reader import KaldiReader
-from reader import LabelReader
+from utils.data_utils import BatchGenerator
+from utils.data_utils import merge_and_split
+from utils.reader import KaldiReader
+from utils.reader import LabelReader
 from wavenet.models import WaveNet
 from tensorflow.contrib.keras import utils
 
