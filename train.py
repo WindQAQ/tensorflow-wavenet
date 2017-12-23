@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--kernel_size', type=int, default=2)
     parser.add_argument('--num_residual_blocks', type=int, default=3)
     parser.add_argument('--num_dilation_layers', type=int, default=5)
+    parser.add_argument('--causal', action='store_true')
     parser.add_argument('--valid', type=str, nargs=2)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--epoch', type=int, default=50)
@@ -112,7 +113,8 @@ def main(args):
                     initial_kernel_size=args.initial_kernel_size,
                     kernel_size=args.kernel_size,
                     num_residual_blocks=args.num_residual_blocks,
-                    num_dilation_layers=args.num_dilation_layers)
+                    num_dilation_layers=args.num_dilation_layers,
+                    causal=args.causal)
 
     train(model, x_train, y_train, args.epoch,
           batch_size=args.batch_size, validation_data=validation_data)

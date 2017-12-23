@@ -11,7 +11,7 @@ def conv1d(inputs,
            filters,
            kernel_size,
            strides=1,
-           padding='causal',
+           padding='same',
            data_format='channels_last',
            dilation_rate=1,
            activation=None,
@@ -57,6 +57,7 @@ def dilation_layer(inputs,
                    kernel_size,
                    dilation_rate,
                    data_format='channels_last',
+                   causal=True,
                    use_bias=False,
                    name=None):
     """Implementation of dilation layer used for WaveNet.
@@ -68,6 +69,7 @@ def dilation_layer(inputs,
                          data_format=data_format,
                          dilation_rate=dilation_rate,
                          activation=tf.nn.tanh,
+                         padding='causal' if causal else 'same',
                          use_bias=use_bias,
                          name='{}-filter'.format(name))
 
@@ -77,6 +79,7 @@ def dilation_layer(inputs,
                        data_format=data_format,
                        dilation_rate=dilation_rate,
                        activation=tf.nn.sigmoid,
+                       padding='causal' if causal else 'same',
                        use_bias=use_bias,
                        name='{}-gate'.format(name))
 
