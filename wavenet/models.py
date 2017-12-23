@@ -11,7 +11,7 @@ class WaveNet(CTCModel):
     """
 
     def __init__(self,
-                 num_features,
+                 input_channels,
                  num_classes,
                  residual_channels,
                  dilation_channels,
@@ -30,7 +30,7 @@ class WaveNet(CTCModel):
         self.num_residual_blocks = num_residual_blocks
         self.num_dilation_layers = num_dilation_layers
         self.use_bias = use_bias
-        super(WaveNet, self).__init__(num_features, num_classes)
+        super(WaveNet, self).__init__(input_channels, num_classes)
 
     def _create_logits(self):
         """Create logits based on WaveNet network.
