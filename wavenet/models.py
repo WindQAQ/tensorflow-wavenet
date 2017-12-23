@@ -46,7 +46,9 @@ class WaveNet(CTCModel):
         num_dilation_layers = self.num_dilation_layers
         use_bias = self.use_bias
         skips = []
-        outputs = conv1d(self.inputs, residual_channels, initial_kernel_size)
+
+        outputs = conv1d(self.inputs, residual_channels,
+                         initial_kernel_size, padding='same', name='pre-conv')
 
         for block_id in range(num_residual_blocks):
             for i in range(num_dilation_layers):
@@ -68,11 +70,11 @@ class WaveNet(CTCModel):
         # sum -> relu -> 1x1 conv -> relu -> 1x1 conv -> outputs
         outputs = tf.add_n(skips)
         outputs = tf.nn.relu(outputs)
-        outputs = conv1d(outputs, skip_channels, 1,
+        outputs = conv1d(outputs, skip_channels, 1, padding='same',
                          use_bias=use_bias, name='post1-1x1-conv')
         outputs = tf.nn.relu(outputs)
-        outputs = conv1d(outputs, num_classes, 1,
-                         use_bias=use_bias, name='post2-1x1-conv')
+        outputs = conv1d(outputs, num_classes, 1, padding='same',
+                         use_bias=True, name='post2-1x1-conv')
 
         logits = tf.transpose(outputs, perm=[1, 0, 2])
 

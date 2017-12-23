@@ -84,12 +84,14 @@ def dilation_layer(inputs,
     skip_connections = conv1d(outputs,
                               skip_channels,
                               1,
+                              padding='same',
                               use_bias=use_bias,
                               name='{}-1x1-conv-skip'.format(name))
 
     transformed_outputs = conv1d(outputs,
                                  residual_channels,
                                  1,
+                                 padding='same',
                                  use_bias=use_bias,
                                  name='{}-1x1-conv-transform'.format(name))
 
