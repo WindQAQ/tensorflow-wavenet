@@ -16,9 +16,9 @@ def parse_args():
         '--train_feat', default='./data/processed/train.39.cmvn.scp')
     parser.add_argument(
         '--train_label', default='./data/material/train.lbl')
-    parser.add_argument('--residual_channels', type=int, default=64)
-    parser.add_argument('--dilation_channels', type=int, default=128)
-    parser.add_argument('--skip_channels', type=int, default=64)
+    parser.add_argument('--residual_channels', type=int, default=16)
+    parser.add_argument('--dilation_channels', type=int, default=32)
+    parser.add_argument('--skip_channels', type=int, default=16)
     parser.add_argument('--initial_kernel_size', type=int, default=2)
     parser.add_argument('--kernel_size', type=int, default=2)
     parser.add_argument('--num_residual_blocks', type=int, default=3)
