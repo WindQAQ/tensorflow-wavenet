@@ -1,5 +1,7 @@
+import os
 import numpy as np
 import pandas as pd
+from scipy.io import wavfile
 from . import kaldi_io
 
 
@@ -42,3 +44,26 @@ class LabelReader(object):
             map(label_map.get, x.values[0])), axis=1)
 
         return label, num_labels, label_map
+
+
+class AudioReader(object):
+
+    @staticmethod
+    def read(audio_path):
+        # audio_path: e.g. /path-of-timit/train or /path-of-timit/test 
+        wavs = {}
+        for person in os.listdir(audio_path):
+            person_dir = os.path.join(audio_path, person)
+            for task in os.listdir(person_dir):
+                task_dir = os.path.join(person_dir, task)
+                raw_sentences = [x.split('.')[0] for x in os.listdir(task_dir)]
+                sentences = list(set(raw_sentences))
+                for sentence in sentences:
+                    wav = wavfile.read(os.path.join(task_dir, sentence+'.wav'))
+                    wavs['{}-{}-{}'.format(person, task, sentence)] = [wav[1]]
+        wavs = pd.DataFrame.from_dict(wavs, orient='index').reset_index()
+        wavs.columns = ['filename', 'wav_value']
+        wavs.set_index('filename', inplace=True)
+        
+        return wavs
+
