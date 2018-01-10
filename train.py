@@ -99,7 +99,7 @@ def main(args):
     validation_data = None
     if args.valid is not None:
         valid_feat, num_valid_features = KaldiReader.read(args.valid[0])
-        assert(num_features == num_valid_features)
+        assert num_features == num_valid_features
         valid_label, _, _ = LabelReader.read(
             args.valid[1], label_map=label_map)
         validation_data = merge_and_split(valid_feat, valid_label)
