@@ -60,10 +60,10 @@ class AudioReader(object):
                 sentences = list(set(raw_sentences))
                 for sentence in sentences:
                     wav = wavfile.read(os.path.join(task_dir, sentence+'.wav'))
-                    wavs['{}-{}-{}'.format(person, task, sentence)] = [wav[1]]
+                    wavs['{}-{}-{}'.format(person, task, sentence)] = wav[1].reshape(-1, 1)
         wavs = pd.DataFrame.from_dict(wavs, orient='index').reset_index()
-        wavs.columns = ['filename', 'wav_value']
-        wavs.set_index('filename', inplace=True)
+        wavs.columns = ['utterance', 'feat']
+        wavs.set_index('utterance', inplace=True)
         
-        return wavs
+        return wavs, 1
 
