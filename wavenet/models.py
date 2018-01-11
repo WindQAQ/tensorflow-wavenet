@@ -20,6 +20,7 @@ class WaveNet(CTCModel):
                  kernel_size=2,
                  num_residual_blocks=1,
                  num_dilation_layers=5,
+                 downsampling=False,
                  causal=False,
                  use_bias=False):
 
@@ -30,6 +31,7 @@ class WaveNet(CTCModel):
         self.kernel_size = kernel_size
         self.num_residual_blocks = num_residual_blocks
         self.num_dilation_layers = num_dilation_layers
+        self.downsampling = downsampling
         self.causal = causal
         self.use_bias = use_bias
         super(WaveNet, self).__init__(input_channels, num_classes)
@@ -46,6 +48,7 @@ class WaveNet(CTCModel):
         kernel_size = self.kernel_size
         num_residual_blocks = self.num_residual_blocks
         num_dilation_layers = self.num_dilation_layers
+        downsampling = self.downsampling
         causal = self.causal
         use_bias = self.use_bias
         skips = []
