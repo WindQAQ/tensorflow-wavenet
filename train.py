@@ -2,10 +2,12 @@ import argparse
 import numpy as np
 import tensorflow as tf
 from utils.data_utils import BatchGenerator
+from utils.data_utils import list_to_sparse
 from utils.data_utils import merge_and_split
 from utils.reader import AudioReader
 from utils.reader import KaldiReader
 from utils.reader import LabelReader
+from utils.timit import Timit
 from wavenet.models import WaveNet
 from tensorflow.contrib.keras import utils
 
@@ -33,6 +35,46 @@ def parse_args():
     return parser.parse_args()
 
 
+def sparse_phone_mapping(st, fn=Timit.convert_61_to_39):
+    """Map sparse phone tensor row by row according to fn.
+    """
+
+    ret = [[] for _ in range(st.dense_shape[0])]
+    start, end, mark = 0, 0, 0
+
+    for i, v in zip(st.indices, st.values):
+        ret[i[0]].append(v)
+
+    ret = [fn(seq) for seq in ret]
+
+    ret = list_to_sparse(ret)
+
+    return tf.SparseTensorValue(np.array([ret.row, ret.col]).T,
+                                np.array(ret.data),
+                                ret.shape)
+
+
+def edit_distance(_hypothesis, _truth):
+    """Calculate the edit distance on Timit dataset,
+       where phones should be converted from 61 phones
+       set to 39 one first.
+    """
+
+    graph = tf.Graph()
+    with graph.as_default():
+        hypothesis = tf.sparse_placeholder(tf.int32)
+        truth = tf.sparse_placeholder(tf.int32)
+        ed = tf.reduce_mean(tf.edit_distance(hypothesis, truth))
+
+    with tf.Session(graph=graph) as sess:
+        ret = sess.run(ed, feed_dict={
+            hypothesis: sparse_phone_mapping(_hypothesis),
+            truth: sparse_phone_mapping(_truth)
+        })
+
+    return ret
+
+
 def eval(sess, model, x, y, batch_size=32):
     gen = BatchGenerator((x, y), batch_size=batch_size)
     ler, loss = 0, 0
@@ -40,12 +82,15 @@ def eval(sess, model, x, y, batch_size=32):
         indices = np.array([labels.row, labels.col]).T
         values = np.array(labels.data)
         dense_shape = labels.shape
+        _labels = tf.SparseTensorValue(indices, values, dense_shape)
 
-        _ler, _loss = sess.run([model.edit_distance, model.loss], feed_dict={
+        decoded, _loss = sess.run([model.decoded, model.loss], feed_dict={
             model.inputs: inputs,
-            model.labels: tf.SparseTensorValue(indices, values, dense_shape),
+            model.labels: _labels,
             model.sequence_length: sequence_length
         })
+
+        _ler = edit_distance(decoded[0], _labels)
 
         ler += _ler * len(inputs)
         loss += _loss * len(inputs)
@@ -137,3 +182,4 @@ def main(args):
 if __name__ == '__main__':
     args = parse_args()
     main(args)
+
