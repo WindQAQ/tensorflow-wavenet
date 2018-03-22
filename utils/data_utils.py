@@ -10,6 +10,21 @@ def merge_and_split(inputs, labels):
     return df.feat, df.label
 
 
+def list_to_sparse(inputs):
+    """Convert list of lists into scipy coo matrix.
+    """
+
+    data = list(itertools.chain(*inputs))
+    row = list(itertools.chain(
+        *[itertools.repeat(i, len(x)) for i, x in enumerate(inputs)]))
+    col = list(itertools.chain(*[range(len(x)) for x in inputs]))
+
+    s = coo_matrix((data, (row, col)), shape=(
+            len(inputs), np.max([len(x) for x in inputs])))
+
+    return s
+
+
 class BatchGenerator(object):
     def __init__(self, data, batch_size=1):
         self.inputs, self.labels = data
@@ -42,15 +57,6 @@ class BatchGenerator(object):
         inputs = np.array([np.pad(x, pad_width=((0, batch_sequence_length - len(x)),
                                                 (0, 0)), mode='constant') for x in self.inputs[start:end]])
 
-        batch_label_length = np.max([len(x) for x in self.labels[start:end]])
-        labels = self.labels[start:end]
-
-        data = list(itertools.chain(*labels))
-        row = list(itertools.chain(
-            *[itertools.repeat(i, len(x)) for i, x in enumerate(labels)]))
-        col = list(itertools.chain(*[range(len(x)) for x in labels]))
-
-        labels = coo_matrix((data, (row, col)), shape=(
-            self.batch_size, batch_label_length))
+        labels = list_to_sparse(self.labels[start:end])
 
         return inputs, labels, sequence_length
