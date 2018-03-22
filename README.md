@@ -40,6 +40,8 @@ Compared with BiLSTM, the WaveNet architecture can achieve the comparable result
 - [WaveNet][WaveNet]
 - [Connectionist Temporal Classification][CTC]
 - [Speech-To-Text-WaveNet][STTW]
+- [ibab][ibab]
+- [Deeperjia][Deeperjia]
 
 ## Contact
 Issues and pull requests are welcomed. Feel free to [contact me](mailto:windqaq@gmail.com) if there's any problem.
@@ -49,3 +51,5 @@ Issues and pull requests are welcomed. Feel free to [contact me](mailto:windqaq@
 [WaveNet]: https://deepmind.com/blog/wavenet-generative-model-raw-audio/
 [CTC]: https://mediatum.ub.tum.de/doc/1292048/341531.pdf
 [STTW]: https://github.com/buriburisuri/speech-to-text-wavenet
+[ibab]: https://github.com/ibab/tensorflow-wavenet
+[Deeperjia]: https://github.com/Deeperjia/tensorflow-wavenet
